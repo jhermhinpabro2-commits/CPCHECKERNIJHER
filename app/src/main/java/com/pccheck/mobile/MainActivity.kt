@@ -66,7 +66,7 @@ class MainActivity : Activity() {
                 val tv = (v as? TextView) ?: TextView(this@MainActivity).apply { setPadding(8, 14, 8, 14); textSize = 12f }
                 tv.setTextColor(when (r.result) {
                     "DETECTED" -> 0xFFFF5555.toInt()
-                    "POSSIBLE", "SUSPICIOUS", "SCRIPT", "HIDDEN", "ATTACHED" -> 0xFFFFB347.toInt()
+                    "POSSIBLE", "SUSPICIOUS", "SCRIPT", "HIDDEN", "ATTACHED", "LEFTOVER", "DELETED" -> 0xFFFFB347.toInt()
                     "UNINSTALLED", "DETACHED" -> 0xFFFF8AD8.toInt()
                     "CONNECTED", "VOLUME", "INFO" -> 0xFF7FE3FF.toInt()
                     else -> Color.WHITE
@@ -83,7 +83,7 @@ class MainActivity : Activity() {
 
         fun refresh() {
             val q = search.text.toString().lowercase()
-            val rank = mapOf("DETECTED" to 0, "SUSPICIOUS" to 1, "POSSIBLE" to 1, "SCRIPT" to 1, "HIDDEN" to 1, "ATTACHED" to 1, "UNINSTALLED" to 2)
+            val rank = mapOf("DETECTED" to 0, "SUSPICIOUS" to 1, "POSSIBLE" to 1, "SCRIPT" to 1, "HIDDEN" to 1, "ATTACHED" to 1, "LEFTOVER" to 1, "UNINSTALLED" to 2, "DELETED" to 2)
             shown.clear()
             shown.addAll(all.filter { q.isEmpty() || "${it.result} ${it.cheat} ${it.evidence} ${it.path}".lowercase().contains(q) }
                 .sortedBy { rank[it.result] ?: 3 })
@@ -183,6 +183,10 @@ class MainActivity : Activity() {
             emptyList(), listOf("Scan All Files" to { p: Page -> filesScan(p) }))
         page("Installed Apps", "All installed apps with cheat detection.",
             emptyList(), listOf("List Apps" to { p: Page -> apps(p) }))
+        page("Deleted / Uninstalled", "Shows apps that were uninstalled (with last-used time), leftover cheat folders, and files deleted to trash.",
+            emptyList(), listOf(
+                "Uninstalled Apps" to { p: Page -> uninstalled(p) },
+                "Deleted Files" to { p: Page -> deleted(p) }))
 
         pages.forEachIndexed { i, p ->
             val b = Button(this).apply {
@@ -309,6 +313,32 @@ class MainActivity : Activity() {
         if (running) return toast("A scan is already running")
         p.clear()
         runTask(p, "Listing apps") { p.add(Scanner.scanApps(this, true)) }
+    }
+
+        private fun uninstalled(p: Page) {
+        if (running) return toast("A scan is already running")
+        if (!hasUsage()) {
+            toast("Turn ON usage access for PC Checker Mobile, then come back")
+            startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)); return
+        }
+        p.clear()
+        val roots = roots(true)
+        val st = hasStorage()
+        runTask(p, "Reading app history") {
+            p.add(Extra.usageHistory(this))
+            if (st) p.add(Extra.leftovers(this, roots))
+        }
+    }
+
+    private fun deleted(p: Page) {
+        if (running) return toast("A scan is already running")
+        if (!storageOk()) return
+        p.clear()
+        val roots = roots(true)
+        runTask(p, "Looking for deleted files") {
+            p.add(Extra.trashed(this))
+            Extra.scanTrashFolders(roots, { cancel }, prog(p)) { r -> p.add(listOf(r)) }
+        }
     }
 
     private fun runTask(p: Page, name: String, task: () -> Unit) {
