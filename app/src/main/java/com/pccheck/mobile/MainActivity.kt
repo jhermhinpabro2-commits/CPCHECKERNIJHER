@@ -117,8 +117,44 @@ class MainActivity : Activity() {
         return p
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
+        override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        showLogin()
+    }
+
+    private fun showLogin() {
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = android.view.Gravity.CENTER
+            setBackgroundColor(0xFF050B2E.toInt())
+            setPadding(48, 48, 48, 48)
+        }
+        box.addView(TextView(this).apply {
+            text = "PC CHECKER"; textSize = 28f; setTextColor(Color.WHITE)
+            gravity = android.view.Gravity.CENTER
+        })
+        box.addView(TextView(this).apply {
+            text = "Enter password to continue"; textSize = 14f; setTextColor(0xFFB8C4FF.toInt())
+            gravity = android.view.Gravity.CENTER; setPadding(0, 8, 0, 24)
+        })
+        val pw = EditText(this).apply {
+            hint = "Password"; setHintTextColor(Color.GRAY); setTextColor(Color.WHITE)
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+        }
+        box.addView(pw)
+        val err = TextView(this).apply { setTextColor(0xFFFF5555.toInt()); setPadding(0, 8, 0, 8) }
+        box.addView(err)
+        box.addView(Button(this).apply {
+            text = "Enter"; isAllCaps = false; setTextColor(Color.WHITE); setBackgroundColor(blue)
+            setOnClickListener {
+                if (pw.text.toString() == "JherScanner") buildMain()
+                else { err.text = "Wrong password"; pw.setText("") }
+            }
+        })
+        setContentView(box)
+    }
+
+    private fun buildMain() {
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL; setBackgroundColor(0xFF050B2E.toInt()); setPadding(16, 56, 16, 16)
         }
