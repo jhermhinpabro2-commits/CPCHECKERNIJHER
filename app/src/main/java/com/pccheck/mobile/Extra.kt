@@ -7,6 +7,9 @@ import android.os.Build
 import android.os.storage.StorageManager
 import java.io.File
 import java.util.PriorityQueue
+import android.app.usage.UsageStatsManager
+import android.os.Bundle
+import android.provider.MediaStore
 
 object Extra {
     private val textExt = setOf("lua", "luau", "txt", "json", "js", "cfg", "ini", "log", "md", "html", "xml", "dat", "tmp", "bak", "")
